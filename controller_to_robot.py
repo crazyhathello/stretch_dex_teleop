@@ -244,10 +244,8 @@ class GripperToGoal:
         Output:
             wrist_yaw, wrist_roll, wrist_pitch
         '''
-        q1, q2, q3, q4 = mock_configuration['q1'], mock_configuration[
-            'q2'], mock_configuration['q3'], mock_configuration['q4']
+        q1, q2, q3, q4 = mock_configuration['q1'], mock_configuration['q2'], mock_configuration['q3'], mock_configuration['q4']
 
-        # print([q1,q2,q3,q4])
         r = Rotation.from_quat([q1, q2, q3, q4])
         ypr = r.as_euler('ZXY', degrees=False)
 
@@ -274,7 +272,7 @@ class GripperToGoal:
 
         return wrist_yaw, wrist_roll, wrist_pitch
 
-    def new_update_goal(self, mock_configuration):
+    def update_goal(self, mock_configuration):
         '''
         This method is modified from update_goal in mainly two aspects:
             1. Removed usage of IK:
@@ -285,12 +283,17 @@ class GripperToGoal:
                 Originally, the rotation is read in as rotation matrix and converted to euler form to calculate values for roll, yaw, pitch
                 In our method, rotation is read in as quaternion, so we converted quaternion to euler for calculation, please refer to get_rotation for details
 
+            3. Support switch between Arm Mode and Base Mode:
+                Arm mode supports arm and wrist movements but not base tranlation 
+                Base mode supports bsae rotation and base translation
+                
         Input:
             mock_configuration: 
                 dictionary with following keys:
                     'joint_mobile_base_rotation', 'joint_lift', 'joint_arm_l0' -> wrist position
                     'stretch_gripper',
                     'q1', 'q2', 'q3', 'q4' -> wrist rotation
+                    'right_button_a', 'right_button_b' -> a for if button A is pressed on right  arm mode and b for base mode 
         '''  
 
         new_goal_configuration = mock_configuration
@@ -324,15 +327,14 @@ class GripperToGoal:
             
             controller_delta = [new_goal_configuration["joint_lift"]- self.last_controller_pos[0],new_goal_configuration["joint_arm_l0"]-self.last_controller_pos[1]]
             
-            # scaled the delta by 2.5 
+            # Original formula: (1-float)*old + float*new = (1-float)*old + float*(old + delta) = old + float*delta => new formula
+            # The change is made because we now calculates the goal based on delta between now and before instead of directly using input position as absolute position
+            # scaled the delta by 2.5 for user experience 
             self.filtered_wrist_position_configuration = [self.filtered_wrist_position_configuration[0]+ 2.5*self.wrist_position_filter*controller_delta[0],
                                                           self.filtered_wrist_position_configuration[1]+ 2.5*self.wrist_position_filter*controller_delta[1]]
 
             self.last_controller_pos = [new_goal_configuration["joint_lift"],new_goal_configuration["joint_arm_l0"]]
 
-            # new_wrist_position_configuration = np.array([new_goal_configuration['joint_mobile_base_rotation'],
-            #                                     new_goal_configuration['joint_lift']-self.origin_of_movement[0],
-            #                                     new_goal_configuration['joint_arm_l0']-self.origin_of_movement[1]])
             if right_button_a and not right_button_b:
                 self.operation_mode = Mode.ARM
                 self.robot.pimu.trigger_beep()
@@ -345,8 +347,8 @@ class GripperToGoal:
                 self.robot.pimu.trigger_beep()
                 self.robot.push_command()
             
+            ########################### BASE MODE ########################################
             if self.operation_mode == Mode.BASE:
-                # ######################### BASE ########################################
                 # Regular Motion
                 dead_zone = 0.1  # 0.25 #0.1 #0.2 #0.3 #0.4
                 move_s = 0.6
@@ -377,9 +379,6 @@ class GripperToGoal:
                 turn_command = right_thumbstick_x
 
                 fast_navigation_mode = False
-                # navigation_mode_trigger = controller_state['right_trigger_pulled']
-                # if (navigation_mode_trigger > 0.5):
-                #     fast_navigation_mode = True
 
                 ##################
                 # convert robot commands to robot movement
@@ -404,16 +403,12 @@ class GripperToGoal:
                         self.robot.base.rotate_by(d_rad, v_rad, a_rad)
                         self.robot.push_command()
 
-
+            ########################## ARM MODE ########################################
             elif self.operation_mode == Mode.ARM:
                 # Use exponential smoothing to filter the wrist
                 # position configuration used to command the
                 # robot.
-                # self.filtered_wrist_position_configuration = (((1.0 - self.wrist_position_filter) * self.filtered_wrist_position_configuration) +
-                #                                             (self.wrist_position_filter * new_wrist_position_configuration))
-
-                # Original formula: (1-float)*old + float*new = (1-float)*old + float*(old + delta) = old + float*delta => new formula
-                # print("FILTERED_WRIST_POSITION_CONFIG:",self.filtered_wrist_position_configuration)
+            
                 new_goal_configuration['joint_lift'] = self.filtered_wrist_position_configuration[0]
                 new_goal_configuration['joint_arm_l0'] = self.filtered_wrist_position_configuration[1]
 
@@ -421,9 +416,6 @@ class GripperToGoal:
 
                 print("joint_lift: ", new_goal_configuration["joint_lift"])
                 print("joint_arm_l0: ", new_goal_configuration["joint_arm_l0"])
-
-
-                #################################
                 
 
                 #################################
@@ -545,9 +537,9 @@ class GripperToGoal:
                 # current_mobile_base_angle = base_odom_theta
 
                 base_rotation_speed = 3.14/50
-                if new_goal_configuration["right_thumbstick_x"]>0.5:
+                if new_goal_configuration["right_thumbstick_x"] > 0.5:
                     new_goal_configuration['joint_mobile_base_rotate_by'] = -base_rotation_speed
-                elif new_goal_configuration["right_thumbstick_x"] <-0.5:
+                elif new_goal_configuration["right_thumbstick_x"] < -0.5:
                     new_goal_configuration['joint_mobile_base_rotate_by'] = base_rotation_speed
 
 

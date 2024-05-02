@@ -1,4 +1,4 @@
-import gripper_to_goal_custom as gg
+import controller_to_robot as gg
 import dex_teleop_parameters as dt
 import numpy as np
 import time
