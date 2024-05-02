@@ -422,7 +422,7 @@ class GripperToGoal:
                 
 
                 #################################
-                # Adjust grip width based on 
+                # Adjust gripper open and close based on user input
 
                 # Initial config is specified in self.grip_status in init()
                 # -95 is tightest, +95 is loosest
