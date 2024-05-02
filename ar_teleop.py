@@ -24,9 +24,9 @@ Parse the command line argument
 2. The argument -s is the speed of the robot, the choices include slow or fastest_stretch_2
 '''
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', '--interval', type=int, required=True, 
+parser.add_argument('-i', '--interval', type=int, 
                     default=10, help='Interval in seconds')
-parser.add_argument('-s', '--speed', choices=['slow', 'fastest_stretch_2'], required=True,
+parser.add_argument('-s', '--speed', choices=['slow', 'fastest_stretch_2'],
                     default='fastest_stretch_2', help='Speed option (choices: slow, fastest_stretch_2)')
 args = parser.parse_args()
 

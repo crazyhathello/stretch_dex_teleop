@@ -325,17 +325,11 @@ class GripperToGoal:
             if not self.robot_allowed_to_move:
                 return
             
-            controller_delta = [new_goal_configuration["joint_lift"]- self.last_controller_pos[0],new_goal_configuration["joint_arm_l0"]-self.last_controller_pos[1]]
-            
-            # Original formula: (1-float)*old + float*new = (1-float)*old + float*(old + delta) = old + float*delta => new formula
-            # The change is made because we now calculates the goal based on delta between now and before instead of directly using input position as absolute position
-            # scaled the delta by 2.5 for user experience 
-            self.filtered_wrist_position_configuration = [self.filtered_wrist_position_configuration[0]+ 2.5*self.wrist_position_filter*controller_delta[0],
-                                                          self.filtered_wrist_position_configuration[1]+ 2.5*self.wrist_position_filter*controller_delta[1]]
 
-            self.last_controller_pos = [new_goal_configuration["joint_lift"],new_goal_configuration["joint_arm_l0"]]
 
             if right_button_a and not right_button_b:
+                if self.operation_mode == Mode.BASE:
+                    self.last_controller_pos = [new_goal_configuration["joint_lift"],new_goal_configuration["joint_arm_l0"]]
                 self.operation_mode = Mode.ARM
                 self.robot.pimu.trigger_beep()
                 self.robot.push_command()
@@ -408,6 +402,15 @@ class GripperToGoal:
                 # Use exponential smoothing to filter the wrist
                 # position configuration used to command the
                 # robot.
+                controller_delta = [new_goal_configuration["joint_lift"]- self.last_controller_pos[0],new_goal_configuration["joint_arm_l0"]-self.last_controller_pos[1]]
+            
+                # Original formula: (1-float)*old + float*new = (1-float)*old + float*(old + delta) = old + float*delta => new formula
+                # The change is made because we now calculates the goal based on delta between now and before instead of directly using input position as absolute position
+                # scaled the delta by 2.5 for user experience 
+                self.filtered_wrist_position_configuration = [self.filtered_wrist_position_configuration[0]+ 2.5*self.wrist_position_filter*controller_delta[0],
+                                                            self.filtered_wrist_position_configuration[1]+ 2.5*self.wrist_position_filter*controller_delta[1]]
+
+                self.last_controller_pos = [new_goal_configuration["joint_lift"],new_goal_configuration["joint_arm_l0"]]
             
                 new_goal_configuration['joint_lift'] = self.filtered_wrist_position_configuration[0]
                 new_goal_configuration['joint_arm_l0'] = self.filtered_wrist_position_configuration[1]
