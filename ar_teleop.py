@@ -36,7 +36,7 @@ socket = context.socket(zmq.PULL)
 
 ''' Quest configuration'''
 # Quest 3 IP on CMU-DEVICE
-socket.connect("tcp://172.26.187.122:12345")
+socket.connect("tcp://172.26.172.110:12345")
 # Quest 3 IP on Jensen's WIFI
 # socket.connect("tcp://192.168.1.179:12345")
 
