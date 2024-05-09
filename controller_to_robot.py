@@ -4,15 +4,11 @@ import math
 import time
 import errno
 from scipy.spatial.transform import Rotation
-from stretch_body.robot_params import RobotParams
 from hello_helpers import hello_misc as hm
 import urchin as urdf_loader
 import os
 import simple_ik as si
-import loop_timer as lt
 import dex_teleop_parameters as dt
-from multiprocessing import shared_memory
-import pprint as pp
 import robot_move as rm
 from enum import Enum
 
