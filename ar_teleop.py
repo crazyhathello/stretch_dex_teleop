@@ -12,7 +12,6 @@ We modified the original update_goal method to fit our new configuration format
 
 import controller_to_robot as c2r
 import dex_teleop_parameters as dt
-import numpy as np
 import time
 import zmq
 import json
@@ -67,7 +66,7 @@ The argument are set based on user experience
 6. right_thumbstick_x is the base rotation, it is set to 0 in the initial configuration
 7. right_thumbstick_y is the base translation, it is set to 0 in the initial configuration
 '''
-base_rotation = 0
+base_rotation = 0.
 initial_configuration = {
     'joint_mobile_base_rotation': base_rotation,
     'joint_lift': 0.6,
