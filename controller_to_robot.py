@@ -427,11 +427,14 @@ class GripperToGoal:
                 # Initial config is specified in self.grip_status in init()
                 # -95 is tightest, +95 is loosest
                 
-                if new_goal_configuration["right_trigger_status"] > 0.8:
-                    self.grip_status -= 5 # Tighter
-                if new_goal_configuration["left_trigger_status"] > 0.8:
-                    self.grip_status += 5 # Looser
-                self.grip_status = np.clip(self.grip_status, -95,95)
+                # if new_goal_configuration["right_trigger_status"] > 0.8:
+                #     self.grip_status -= 5 # Tighter
+                # if new_goal_configuration["left_trigger_status"] > 0.8:
+                #     self.grip_status += 5 # Looser
+                self.grip_status = 95 - new_goal_configuration["right_trigger_status"] * 190
+                self.grip_status = np.exp(0.02764 * (self.grip_status + 95)) - 90
+                print(self.grip_status)
+                # self.grip_status = np.clip(self.grip_status, -95,95)
                 new_goal_configuration["stretch_gripper"] = self.grip_status
 
                 ##################################################
